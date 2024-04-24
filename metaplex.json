@@ -1,0 +1,35 @@
+const web3 = require('@solana/web3.js');
+const mpl = require('@metaplex-foundation/mpl-token-metadata');
+const { PublicKey } = web3;
+
+async function main() {
+    const connection = new web3.Connection(web3.clusterApiUrl('devnet'), 'confirmed');
+    const mintPublicKey = new PublicKey('76CytFpKWkHZwinTr8yw5KyR9g5XEW2fmucxWQ3wUVy9');
+    const payerPublicKey = new PublicKey('Cc9DMy1vzGVD9YUPmBcwrQRbtPqEJe2XZ4dHgmhL2j3a');
+    const metadataPDA = await mpl.actions.findMetadataPda(mintPublicKey);
+
+    const tokenMetadata = {
+        name: "TogaHim",
+        symbol: "TOGH",
+        uri: "https://raw.githubusercontent.com/Best0fKinto/crypto/main/uri.json",  // Make sure this URL is publicly accessible and contains your metadata in JSON format.
+        sellerFeeBasisPoints: 500,
+        creators: null,
+        collection: null,
+        uses: null
+    };
+
+    const createMetadataTx = new mpl.CreateMetadataV2({ 
+        metadata: metadataPDA, 
+        metadataData: new mpl.DataV2(tokenMetadata),
+        updateAuthority: payerPublicKey,
+        mint: mintPublicKey,
+        mintAuthority: payerPublicKey
+    });
+
+    const transaction = new web3.Transaction().add(createMetadataTx);
+    console.log("Sending transaction...");
+    const signature = await web3.sendAndConfirmTransaction(connection, transaction, [/* array of signers */]);
+    console.log(`Transaction sent. Signature: ${signature}`);
+}
+
+main().catch(console.error);
